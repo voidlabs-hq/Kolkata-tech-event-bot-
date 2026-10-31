@@ -4,8 +4,8 @@ from dotenv import load_dotenv               # reads the .env file
 
 load_dotenv()                                # load secrets from .env into environment variables
 
-TOKEN = os.environ["TELEGRAM_TOKEN"]         # bot token. CAPS = constant, a value that doesn't change while the program runs
-CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]     # your chat ID
+TOKEN = os.environ["TELEGRAM_TOKEN"].strip()         # .strip() removes invisible spaces and line breaks from both ends of the text
+CHAT_ID = os.environ["TELEGRAM_CHAT_ID"].strip()     # same protection for the chat ID
 
 
 def send_message(text):                      # reusable function: give it any text, it sends it to you on Telegram
