@@ -1,0 +1,8 @@
+# secrets: bot token and chat ID, never upload
+.env
+
+# virtual environment: big, and rebuilt from requirements.txt
+.venv/
+
+# auto-generated Python cache files
+__pycache__/

@@ -1,0 +1,29 @@
+name: Check for new events              # the name shown in the repo's Actions tab
+
+on:                                     # WHEN this runs
+  schedule:
+    - cron: "30 3 * * *"                # every day at 03:30 UTC = 09:00 IST (cron times are always UTC)
+  workflow_dispatch:                    # adds a manual "Run workflow" button, which we'll use to test
+
+permissions:
+  contents: write                       # lets the job commit seen_events.json back to the repo (the bot's memory)
+
+jobs:
+  check:
+    runs-on: ubuntu-latest              # GitHub gives us a fresh Linux machine for each run
+    steps:
+      - uses: actions/checkout@v4       # downloads your repo's code onto that machine
+      - uses: actions/setup-python@v5   # installs Python
+        with:
+          python-version: "3.12"        # fine to differ from your local version, we use nothing version-specific
+      - run: pip install -r requirements.txt   # installs the libraries from your shopping list
+      - run: python main.py             # runs the bot
+        env:                            # hands the secrets to the program as environment variables
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}        # read from GitHub's encrypted secret store (we add these later)
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      - name: Save memory               # the machine is deleted after each run, so we must save what the bot learned
+        run: |
+          git config user.name "event-bot"                          # git needs an author name to commit
+          git config user.email "event-bot@users.noreply.github.com"  # and an email (this one is fake on purpose)
+          git add seen_events.json                                  # stage the memory file
+          git diff --staged --quiet || (git commit -m "Update seen events" && git push)  # commit and push ONLY if the file changed
