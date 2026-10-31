@@ -3,7 +3,12 @@ name: Check for new events              # the name shown in the repo's Actions t
 on:                                     # WHEN this runs
   schedule:
     - cron: "30 3 * * *"                # every day at 03:30 UTC = 09:00 IST (cron times are always UTC)
-  workflow_dispatch:                    # adds a manual "Run workflow" button, which we'll use to test
+  workflow_dispatch:                    # the manual "Run workflow" button
+    inputs:                             # extra options shown on that button
+      send_test:                        # the option's internal name
+        description: "Send a test Telegram message"   # the label you'll see next to the checkbox
+        type: boolean                   # a tick box
+        default: false                  # unticked unless you tick it
 
 permissions:
   contents: write                       # lets the job commit seen_events.json back to the repo (the bot's memory)
@@ -17,9 +22,15 @@ jobs:
         with:
           python-version: "3.12"        # fine to differ from your local version, we use nothing version-specific
       - run: pip install -r requirements.txt   # installs the libraries from your shopping list
-      - run: python main.py             # runs the bot
+      - name: Telegram test message     # only runs when you tick the checkbox
+        if: ${{ inputs.send_test }}     # skip this step unless send_test is ticked
+        run: python notify.py           # notify.py's self-test sends one test message and touches nothing else
         env:                            # hands the secrets to the program as environment variables
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}        # read from GitHub's encrypted secret store (we add these later)
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}        # read from GitHub's encrypted secret store
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      - run: python main.py             # runs the real bot
+        env:                            # same secrets again, since each step has its own environment
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       - name: Save memory               # the machine is deleted after each run, so we must save what the bot learned
         run: |
